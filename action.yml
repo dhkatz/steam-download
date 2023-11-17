@@ -1,0 +1,27 @@
+name: 'Steam - Download'
+author: 'David Katz'
+description: 'Download a game from Steam using SteamCMD'
+inputs:
+  username:
+    description: 'Steam username'
+    required: true
+    default: 'anonymous'
+  totp:
+    description: 'Steam TOTP code'
+    required: false
+  appid:
+    description: 'Steam AppID'
+    required: true
+  path:
+    description: 'Path to download the game to'
+    required: false
+runs:
+  using: 'composite'
+  steps:
+    - run: ${{ github.action_path }}/steam-download.ps1
+      shell: pwsh
+      env:
+        STEAM_USERNAME: ${{ inputs.username }}
+        STEAM_TOTP: ${{ inputs.totp }}
+        STEAM_APP_ID: ${{ inputs.appid }}
+        STEAM_GAME_PATH: ${{ inputs.path }}
