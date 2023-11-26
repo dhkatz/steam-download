@@ -6,8 +6,14 @@ inputs:
     description: 'Steam username'
     required: true
     default: 'anonymous'
+  password:
+    description: 'Steam password'
+    required: false
   totp:
     description: 'Steam TOTP code'
+    required: false
+  vdf:
+    description: 'Path to VDF file containing login details'
     required: false
   appid:
     description: 'Steam AppID'
@@ -22,6 +28,8 @@ runs:
       shell: pwsh
       env:
         STEAM_USERNAME: ${{ inputs.username }}
+        STEAM_PASSWORD: ${{ inputs.password }}
         STEAM_TOTP: ${{ inputs.totp }}
+        STEAM_VDF: ${{ inputs.vdf }}
         STEAM_APP_ID: ${{ inputs.appid }}
         STEAM_GAME_PATH: ${{ inputs.path }}

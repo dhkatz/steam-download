@@ -18,13 +18,30 @@ if (!(Test-Path "$SteamCMDPath\steamcmd.exe")) {
     Expand-Archive -Path "$SteamCMDPath\steamcmd.zip" -DestinationPath $SteamCMDPath
 }
 
+$LoginMethod = "anonymous"
+
 # If STEAM_TOTP is set, use it to login, else use anonymous login
-if ($env:STEAM_TOTP) {
+if ($env:STEAM_VDF) {
+    Write-Output ""
+    Write-Output "#################################"
+    Write-Output "#     Using SteamGuard VDF      #"
+    Write-Output "#################################"
+    Write-Output ""
+
+    $SteamGuardVDFPath = "$SteamCMDPath\config"
+    New-Item -ItemType Directory -Force -Path $SteamGuardVDFPath
+    $DecodedVDF = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($env:STEAM_VDF))
+    $DecodedVDF | Out-File "$SteamGuardVDFPath\config.vdf" -Encoding utf8
+
+    $LoginMethod = "vdf"
+} elseif ($env:STEAM_TOTP) {
     Write-Output ""
     Write-Output "#################################"
     Write-Output "#     Using SteamGuard TOTP     #"
     Write-Output "#################################"
     Write-Output ""
+
+    $LoginMethod = "totp"
 } else {
     Write-Output ""
     Write-Output "#################################"
@@ -44,15 +61,31 @@ Write-Output ""
 $SteamCMDPath = "$PWD\steamcmd"
 $SteamCMDExe = "$SteamCMDPath\steamcmd.exe"
 $SteamUsername = $env:STEAM_USERNAME ?? "anonymous"
+$SteamPassword = $env:STEAM_PASSWORD ?? ""
 
-$SteamCMDArgs = @(
-    "+steam_guard_code $env:STEAM_TOTP"
-    "+login $SteamUsername"
-    "+quit"
-)
+if ($LoginMethod -eq "vdf") {
+    $SteamCMDArgs = @(
+        "+@ShutdownOnFailedCommand 1"
+        "+login $SteamUsername"
+        "+quit"
+    )
+} elseif ($LoginMethod -eq "totp") {
+    $SteamCMDArgs = @(
+        "+@ShutdownOnFailedCommand 1"
+        "+set_steam_guard_code $env:STEAM_TOTP"
+        "+login `"$SteamUsername`" `"$SteamPassword`""
+        "+quit"
+    )
+} else {
+    $SteamCMDArgs = @(
+        "+@ShutdownOnFailedCommand 1"
+        "+login $SteamUsername"
+        "+quit"
+    )
+}
 
 # Run SteamCMD, hide output
-& $SteamCMDExe $SteamCMDArgs | Out-Null
+& $SteamCMDExe $SteamCMDArgs
 
 # If the exit code is 0, the login was successful
 if ($LASTEXITCODE -eq 0) {
@@ -80,13 +113,23 @@ Write-Output "#################################"
 $SteamCMDPath = "$PWD\steamcmd"
 $SteamCMDExe = "$SteamCMDPath\steamcmd.exe"
 $SteamUsername = $env:STEAM_USERNAME ?? "anonymous"
-$SteamAppId = $env:STEAM_APP_ID ?? 90
+
+$SteamAppId = $env:STEAM_APP_ID ?? $env:STEAM_APPID ?? ""
 $SteamGamePath = $env:STEAM_GAME_PATH ?? "$PWD\game"
 
+if ($SteamAppId -eq "") {
+    Write-Output ""
+    Write-Output "#################################"
+    Write-Output "#     Steam App ID not set      #"
+    Write-Output "#################################"
+    Write-Output ""
+    exit 1
+}
+
 $SteamCMDArgs = @(
-    "+steam_guard_code $env:STEAM_TOTP"
-    "+login $SteamUsername"
+    "+@ShutdownOnFailedCommand 1"
     "+force_install_dir $SteamGamePath"
+    "+login $SteamUsername"
     "+app_update $SteamAppId validate"
     "+quit"
 )
