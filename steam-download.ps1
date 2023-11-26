@@ -18,6 +18,23 @@ if (!(Test-Path "$SteamCMDPath\steamcmd.exe")) {
     Expand-Archive -Path "$SteamCMDPath\steamcmd.zip" -DestinationPath $SteamCMDPath
 }
 
+Write-Output ""
+Write-Output "#################################"
+Write-Output "#     Updating SteamCMD         #"
+Write-Output "#################################"
+Write-Output ""
+
+# Run SteamCMD to update itself
+$SteamCMDExe = "$SteamCMDPath\steamcmd.exe"
+
+$SteamCMDArgs = @(
+    "+@ShutdownOnFailedCommand 1"
+    "+quit"
+)
+
+# Run SteamCMD, hide output
+& $SteamCMDExe $SteamCMDArgs
+
 $LoginMethod = "anonymous"
 
 # If STEAM_TOTP is set, use it to login, else use anonymous login
@@ -58,8 +75,6 @@ Write-Output "#       Testing Steam Login     #"
 Write-Output "#################################"
 Write-Output ""
 
-$SteamCMDPath = "$PWD\steamcmd"
-$SteamCMDExe = "$SteamCMDPath\steamcmd.exe"
 $SteamUsername = $env:STEAM_USERNAME ?? "anonymous"
 $SteamPassword = $env:STEAM_PASSWORD ?? ""
 
@@ -109,10 +124,6 @@ Write-Output ""
 Write-Output "#################################"
 Write-Output "#       Downloading Game        #"
 Write-Output "#################################"
-
-$SteamCMDPath = "$PWD\steamcmd"
-$SteamCMDExe = "$SteamCMDPath\steamcmd.exe"
-$SteamUsername = $env:STEAM_USERNAME ?? "anonymous"
 
 $SteamAppId = $env:STEAM_APP_ID ?? $env:STEAM_APPID ?? ""
 $SteamGamePath = $env:STEAM_GAME_PATH ?? "$PWD\game"
