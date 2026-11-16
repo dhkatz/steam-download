@@ -1,0 +1,6 @@
+# LF everywhere, so dist/ builds byte-for-byte the same on every OS (CI checks it).
+* text=auto eol=lf
+*.png binary
+
+# Build output: hide it from diffs and language stats.
+dist/** linguist-generated=true -diff

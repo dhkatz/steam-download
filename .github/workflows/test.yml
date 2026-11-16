@@ -1,0 +1,89 @@
+name: Test
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+        - '**.md'
+  pull_request:
+    paths-ignore:
+        - '**.md'
+
+jobs:
+    build:
+        name: Build
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-node@v4
+              with:
+                node-version: 24.x
+                cache: 'npm'
+
+            - run: npm ci
+            - run: npm run build
+
+            - name: Check dist is up to date
+              run: |
+                if [ -n "$(git status --porcelain -- dist)" ]; then
+                  git status --short -- dist
+                  echo "::error::dist/ is out of date. Run 'npm run build' and commit the result."
+                  exit 1
+                fi
+
+            # GitHub runs dist/index.js without node_modules, so it must not import any package.
+            - name: Smoke test the action without node_modules
+              run: |
+                dir="$(mktemp -d)"
+                cp -r dist action.yml package.json "$dir/"
+                cd "$dir"
+                output="$(node dist/index.js 2>&1 || true)"
+                echo "$output"
+                echo "$output" | grep -q "Input required and not supplied: appid"
+
+            - run: npm test -- --run
+
+    download:
+        name: Download (${{ matrix.runs-on }}, ${{ matrix.platform || 'native' }})
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - runs-on: ubuntu-latest
+                    - runs-on: macos-latest
+                    - runs-on: windows-latest
+                    # Windows files on a Linux runner.
+                    - runs-on: ubuntu-latest
+                      platform: windows
+        runs-on: ${{ matrix.runs-on }}
+        steps:
+            - uses: actions/checkout@v4
+
+            # Steamworks SDK Redist: small, and free to download anonymously.
+            - name: Download app 1007
+              id: download
+              uses: ./
+              with:
+                appid: 1007
+                platform: ${{ matrix.platform }}
+
+            - name: Check the outputs
+              shell: bash
+              env:
+                DIR: ${{ steps.download.outputs.path }}
+                BUILD: ${{ steps.download.outputs.buildid }}
+              run: |
+                echo "path=$DIR buildid=$BUILD"
+                test -n "$BUILD"
+                test -f "$DIR/steamapps/appmanifest_1007.acf"
+                ls "$DIR"
+
+            # Where SteamCMD keeps config.vdf on this OS (the vdf input is written there).
+            - name: SteamCMD config folders
+              shell: bash
+              run: |
+                for dir in "$RUNNER_TEMP/steamcmd/config" "$HOME/Steam/config" "$HOME/.steam/steam/config" \
+                           "$HOME/.local/share/Steam/config" "$HOME/Library/Application Support/Steam/config"; do
+                  if [ -d "$dir" ]; then echo "exists: $dir"; ls "$dir"; fi
+                done

@@ -1,35 +1,52 @@
 name: 'Steam - Download'
-author: 'David Katz'
-description: 'Download a game from Steam using SteamCMD'
+author: 'dhkatz'
+description: 'Download a game or app from Steam with SteamCMD, on Linux, macOS or Windows runners.'
+
+branding:
+  icon: 'download-cloud'
+  color: 'blue'
+
 inputs:
   username:
-    description: 'Steam username'
-    required: true
+    description: 'Steam username. anonymous works for free apps such as dedicated servers.'
+    required: false
     default: 'anonymous'
   password:
-    description: 'Steam password'
+    description: 'Steam password. Needs Steam Guard off, or totp.'
     required: false
   totp:
-    description: 'Steam TOTP code'
+    description: 'Steam Guard code, with password.'
     required: false
   vdf:
-    description: 'Path to VDF file containing login details'
+    description: 'Base64 of SteamCMD''s config/config.vdf after logging in once (recommended). The same value gmod-workshop/workshop-upload uses.'
     required: false
+
   appid:
-    description: 'Steam AppID'
+    description: 'Steam app ID to download'
     required: true
   path:
-    description: 'Path to download the game to'
+    description: 'Where to install the app. Default: <runner temp>/steam-download/<appid>, outside the workspace.'
     required: false
+  platform:
+    description: 'Which platform''s files to download: windows, linux or macos. Default: the runner''s own.'
+    required: false
+  beta:
+    description: 'Beta branch to download'
+    required: false
+  beta-password:
+    description: 'Password for a private beta branch'
+    required: false
+  validate:
+    description: 'Check every file after downloading'
+    required: false
+    default: 'false'
+
+outputs:
+  path:
+    description: 'Where the app was installed'
+  buildid:
+    description: 'The Steam build ID that was installed (useful in cache keys and version checks)'
+
 runs:
-  using: 'composite'
-  steps:
-    - run: ${{ github.action_path }}/steam-download.ps1
-      shell: pwsh
-      env:
-        STEAM_USERNAME: ${{ inputs.username }}
-        STEAM_PASSWORD: ${{ inputs.password }}
-        STEAM_TOTP: ${{ inputs.totp }}
-        STEAM_VDF: ${{ inputs.vdf }}
-        STEAM_APP_ID: ${{ inputs.appid }}
-        STEAM_GAME_PATH: ${{ inputs.path }}
+  using: 'node24'
+  main: 'dist/index.js'
