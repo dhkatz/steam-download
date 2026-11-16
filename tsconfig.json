@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ES2018",            // Modern Node.js supports recent ECMAScript features
+    "module": "Node16",          // Node.js uses CommonJS modules
+    "rootDir": "./src",           // Source files location
+    "outDir": "./dist",           // Output directory for compiled files
+    "strict": true,               // Enable all strict type checking options
+    "esModuleInterop": true,      // Enable CommonJS/AMD/UMD modules interop
+    "skipLibCheck": true,         // Skip type checking of declaration files
+    "forceConsistentCasingInFileNames": true,  // Ensure consistent casing in imports
+    "resolveJsonModule": true,    // Allow importing JSON files
+    "declaration": true,          // Generate corresponding .d.ts files
+    "sourceMap": true,            // Generate source maps for debugging
+    "removeComments": false,      // Keep comments in output
+    "lib": [
+      "ES2022"
+    ],
+    "types": [
+      "node"
+    ]
+  },
+  "include": [
+    "src/**/*"                    // Include all files in src directory
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}
